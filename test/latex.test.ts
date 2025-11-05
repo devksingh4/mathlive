@@ -160,3 +160,47 @@ describe('MATHRM SERIALIZATION (issue #2818)', () => {
     expect(serialize(input)).toBe(expected);
   });
 });
+
+describe('SCIENTIFIC NOTATION PARSING', () => {
+  function serialize(latex: string): string {
+    const atoms = parseLatex(latex, { parseMode: 'math' });
+    return Atom.serialize(atoms, { defaultMode: 'math' });
+  }
+
+  test.each([
+    // Scientific notation with negative exponent
+    ['5e-2', '5e-2'],
+    ['5E-2', '5E-2'],
+    ['5e-23', '5e-23'],
+    ['1.5e-3', '1.5e-3'],
+    ['2.5E-10', '2.5E-10'],
+
+    // Scientific notation with positive exponent
+    ['5e+2', '5e+2'],
+    ['5E+2', '5E+2'],
+    ['3.14e+5', '3.14e+5'],
+
+    // Scientific notation without explicit sign
+    ['5e2', '5e2'],
+    ['1.23e10', '1.23e10'],
+
+    // Scientific notation should work with fractions
+    ['\\frac{5e-2}{4}', '\\frac{5e-2}{4}'],
+    ['\\frac{1.5e+3}{2}', '\\frac{1.5e+3}{2}'],
+    ['\\frac{2e10}{3}', '\\frac{2e10}{3}'],
+  ])('%#/ %p serializes as %p', (input, expected) => {
+    expect(serialize(input)).toBe(expected);
+  });
+
+  test.each([
+    '5e-2',
+    '5E-2',
+    '5e+2',
+    '3.14e-10',
+    '2.5E+5',
+    '1.23e10',
+    '\\frac{5e-2}{4}',
+  ])('%#/ %p renders correctly', (x) => {
+    expect(markupAndError(x)).toMatchSnapshot();
+  });
+});

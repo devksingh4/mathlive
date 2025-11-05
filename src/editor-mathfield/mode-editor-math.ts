@@ -562,6 +562,29 @@ function getImplicitArgOffset(model: _Model): Offset {
 function isImplicitArg(atom: Atom): boolean {
   // A digit, or a decimal point
   if (atom.isDigit()) return true;
+  // Check for scientific notation
+  // If a number is in scientific notation, all next ops should be treated as one unit.
+  if (
+    atom.type === 'mbin' &&
+    (atom.value === '+' || atom.value === '-' || atom.value === '−')
+  ) {
+    const prev = atom.leftSibling;
+    const next = atom.rightSibling;
+
+    // Check if preceded by 'e' or 'E' and followed by a digit.
+    // This implies that the items after it are part of the scientific notation
+    // and thus should be considered part of the implicit arg.
+    if (
+      prev &&
+      prev.type === 'mord' &&
+      /^[eE]$/.test(prev.value) &&
+      next &&
+      next.isDigit()
+    ) {
+      return true;
+    }
+  }
+
   if (
     atom.type &&
     /^(mord|surd|subsup|leftright|mop|mclose)$/.test(atom.type)
